@@ -1,48 +1,72 @@
-﻿<#
+<#
 .Synopsis
-   Crypted Passwordfile
+   Create a crypted password file securely.
 .DESCRIPTION
-   The script ask for path where to save a crypted passwordfile to be 
-   used in automation where elevated credential are needed,
+   This script prompts the user for credentials and saves the encrypted password to the specified file path.
+   It is intended for use in automation where elevated credentials are required.
 .EXAMPLE
    New-CryptedPasswordFile -Filepath .\CryptedPasswordfilename.txt
 .NOTES
 
-		===========================================================================
-		Created with: 	SAPIEN Technologies, Inc., PowerShell Studio 2021 v5.8.183
-		Created on:   	1/27/2021 10:35 AM
-		Updated on:		  1/27/2021 10:35 AM
-		Created by:   	Christian Damberg, Sebastian Thörngren
-		Organization: 	Cygate AB
-		Filename:     	New-CryptedPasswordFile.ps1
-		===========================================================================
+        ===========================================================================
+        Created with:     SAPIEN Technologies, Inc., PowerShell Studio 2021 v5.8.183
+        Created on:       1/27/2021 10:35 AM
+        Updated on:       4/14/2025
+        Created by:       Christian Damberg, Sebastian Thörngren
+        Updated by:       Christian Damberg
+        Organization:     Cygate AB
+        Filename:         New-CryptedPasswordFile.ps1
+        ===========================================================================
 #>
 function New-CryptedPasswordFile
 {
     [CmdletBinding()]
     [Alias()]
-    [OutputType([int])]
+    [OutputType([void])]
     Param
     (
-        # Param1 help description
+        # Path to save the crypted password file
         [Parameter(Mandatory=$true,
                    ValueFromPipelineByPropertyName=$true,
                    Position=0)]
-        $Filepath
-
+        [ValidateNotNullOrEmpty()]
+        [string]$Filepath
     )
 
     Begin
     {
+        # Log the start of the operation
+        Write-Verbose "Starting the New-CryptedPasswordFile function."
     }
     Process
     {
-    
-    $credential = Get-Credential
-    $credential.Password | ConvertFrom-SecureString | Set-Content $Filepath
+        try {
+            # Prompt the user for credentials
+            $credential = Get-Credential
+
+            # Validate output path
+            if (!(Test-Path -Path (Split-Path -Path $Filepath -Parent))) {
+                throw "The directory for the file path '$Filepath' does not exist."
+            }
+
+            # Encrypt the password and save it to the specified file
+            $credential.Password | ConvertFrom-SecureString | Set-Content -Path $Filepath -Force
+
+            # Log success
+            Write-Verbose "Encrypted password successfully saved to $Filepath."
+
+        } catch {
+            # Handle errors gracefully
+            Write-Error "An error occurred: $_"
+        }
     }
     End
     {
+        # Log the end of the operation
+        Write-Verbose "Completed the New-CryptedPasswordFile function."
     }
 }
-New-CryptedPasswordFile
+
+# Example Usage
+# Uncomment the following line to test the function
+# New-CryptedPasswordFile -Filepath .\CryptedPasswordfilename.txt
